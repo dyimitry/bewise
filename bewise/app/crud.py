@@ -1,17 +1,19 @@
+from typing import List
+
 from sqlalchemy import select
 
 from bewise.app.models import Application, AsyncSessionLocal
 from bewise.app.producer import get_kafka_producer, publish_to_kafka
 from bewise.app.schemas import ApplicationCreate, ApplicationDB
-from typing import List
 
 
-async def create_new_application(
-        new_application: ApplicationCreate
-) -> Application:
+async def create_new_application(new_application: ApplicationCreate) -> Application:
     new_application = new_application.dict()
 
-    db_application = Application(user_name=new_application['user_name'], description=new_application['description'])
+    db_application = Application(
+        user_name=new_application["user_name"],
+        description=new_application["description"],
+    )
 
     async with AsyncSessionLocal() as session:
         session.add(db_application)
@@ -24,7 +26,7 @@ async def create_new_application(
             "id": db_application.id,
             "user_name": db_application.user_name,
             "description": db_application.description,
-            "created_at": db_application.created_at.isoformat()  # Преобразование datetime в строку
+            "created_at": db_application.created_at.isoformat(),  # Преобразование datetime в строку
         }
         producer = await get_kafka_producer()
         await publish_to_kafka(producer, application_data)
